@@ -1,21 +1,25 @@
-const form = document.getElementById("form");
-const search = document.getElementById("search");
-const result = document.getElementById("result");
-const more = document.getElementById("more");
+const searchForm = document.getElementById("form");
+const searchInput = document.getElementById("search");
+const searchResult = document.getElementById("result");
+const moreResults = document.getElementById("more");
 
+// API URL
 const apiURL = "https://api.lyrics.ovh";
 
 // searching by artist or song
 
-async function searchSongs(term) {
-  const res = await fetch(`${apiURL}/suggest/${term}`);
+async function searchSongs(searchTerm) {
+  const res = await fetch(`${apiURL}/suggest/${searchTerm}`);
   const data = await res.json();
 
   showData(data);
 }
 
-// displaying the song and artist in the DOM
+/** The showdData function is on the global lexical environment and thereofore can be accessed
+   by the other functions defined in the global lexical environment 
+*/
 
+// displaying the song and artist in the DOM
 function showData(data) {
   result.innerHTML = `
         <ul class='songs'>${data.data
@@ -29,7 +33,7 @@ function showData(data) {
     `;
 
   if (data.prev || data.next) {
-    more.innerHTML = `
+    moreResults.innerHTML = `
             ${
               data.prev
                 ? `<button class='btn' onClick='getMoreSongs('${data.prev}')>Prev</button>'`
@@ -43,12 +47,11 @@ function showData(data) {
             }
         `;
   } else {
-    more.innerHTML = "";
+    moreResults.innerHTML = "";
   }
 }
 
 // getting the previous and next songs
-
 async function getMoreSongs(url) {
   const res = await fetch("https://cors-anywhere.herokuapp.com/${url}");
   const data = await res.json();
@@ -57,7 +60,6 @@ async function getMoreSongs(url) {
 }
 
 // getting song lyrics
-
 async function getLyrics(artist, songTitle) {
   const res = await fetch("${apiURL}/v1/${artist}/${songTitle}");
   const data = await res.json();
@@ -69,7 +71,30 @@ async function getLyrics(artist, songTitle) {
     <span>${lyrics}</span>;
   }
 
-  more.innerHTML = "";
+  moreResults.innerHTML = "";
 }
 
-// the event listeners
+// Event listeners
+form.addEventListener('submit', e => {
+  e.preventDefault();
+
+  const searchTerm = search.value.trim();
+
+  if (!searchTerm) {
+    alert('Please type in a search term');
+  } else {
+    searchSongs(searchTerm);
+  }
+});
+
+// Get lyrics button click
+result.addEventListener('click', e => {
+  const clickedEl = e.target;
+
+  if (clickedEl.tagName === 'BUTTON') {
+    const artist = clickedEl.getAttribute('data-artist');
+    const songTitle = clickedEl.getAttribute('data-songtitle');
+
+    getLyrics(artist, songTitle);
+  }
+});
